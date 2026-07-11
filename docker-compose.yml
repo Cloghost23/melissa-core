@@ -1,0 +1,28 @@
+version: '3.8'
+
+services:
+  # The Core Inference Engine (llama.cpp)
+  llama-server:
+    image: ghcr.io/ggerganov/llama.cpp:server
+    container_name: melissa-ai-core
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./models:/models
+    # Ensure your model filename matches exactly here
+    command: -m /models/your-model.gguf -c 2048 --host 0.0.0.0 --port 8080
+    restart: unless-stopped
+
+  # The Melissa Interface & Orchestrator (Flask)
+  melissa-web:
+    build: .
+    container_name: melissa-web-ui
+    ports:
+      - "5000:5000"
+    environment:
+      # Directs Flask to talk to the llama-server container network
+      - LLAMA_SERVER_URL=http://llama-server:8080
+    depends_on:
+      - llama-server
+    restart: unless-stopped
+
